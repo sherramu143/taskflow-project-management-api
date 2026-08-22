@@ -5,11 +5,13 @@ import { env } from '../config/env';
 const host = env && env.REDIS_HOST ? env.REDIS_HOST : 'localhost';
 const port = env && env.REDIS_PORT ? parseInt(env.REDIS_PORT, 10) : 6379;
 const password = env && env.REDIS_PASSWORD ? env.REDIS_PASSWORD : undefined;
+const isLocal = host === 'localhost' || host === '127.0.0.1' || host === 'redis';
 
 export const redisConnection = new Redis({
   host,
   port,
   password,
+  tls: isLocal ? undefined : {},
   maxRetriesPerRequest: null,
   lazyConnect: true,
 });
