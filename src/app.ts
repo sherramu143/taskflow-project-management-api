@@ -18,6 +18,14 @@ app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get('/docs-json', (_req, res) => res.json(swaggerSpec));
 
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    message: 'Welcome to TaskFlow API',
+    docs: '/api-docs',
+    health: '/health'
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
