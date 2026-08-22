@@ -1,0 +1,189 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+enum Role {
+  org_admin
+  member
+}
+
+enum Status {
+  todo
+  in_progress
+  review
+  done
+}
+
+enum Priority {
+  low
+  medium
+  high
+  urgent
+}
+
+model User {
+  id            String           @id @default(uuid()) @db.Uuid
+  email         String           @unique
+  passwordHash  String           @map("password_hash")
+  name          String
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  memberships   OrgMember[]
+  assignments   TaskAssignment[]
+  comments      Comment[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model Organization {
+  id        String      @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String      @unique
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  members   OrgMember[]
+  projects  Project[]
+  tasks     Task[]
+
+  @@map("organizations")
+}
+
+// org_members links users to organizations with specific RBAC roles.
+// FK Decisions:
+// - org: CASCADE - deleting an org removes membership records.
+// - user: CASCADE - deleting a user removes membership records.
+model OrgMember {
+  id        String       @id @default(uuid()) @db.Uuid
+  orgId     String       @map("org_id") @db.Uuid
+  userId    String       @map("user_id") @db.Uuid
+  role      Role         @default(member)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Index justification: Rapid user-tenant membership lookup during authentication & RBAC middleware.
+  @@unique([orgId, userId])
+  @@index([userId, orgId])
+  @@map("org_members")
+}
+
+// projects belong to an organization and support soft-delete via deleted_at.
+// FK Decision: org: CASCADE - deleting an org deletes all its projects.
+model Project {
+  id          String    @id @default(uuid()) @db.Uuid
+  orgId       String    @map("org_id") @db.Uuid
+  name        String
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  // Index justification: Rapid querying of active (non-deleted) projects within an organization.
+  @@index([orgId, deletedAt])
+  @@map("projects")
+}
+
+// tasks belong to projects and organizations, support soft-delete and FTS.
+// FK Decisions:
+// - project: CASCADE - deleting a project deletes all associated tasks.
+// - org: CASCADE - deleting an org deletes all its tasks.
+model Task {
+  id          String    @id @default(uuid()) @db.Uuid
+  projectId   String    @map("project_id") @db.Uuid
+  orgId       String    @map("org_id") @db.Uuid
+  title       String
+  description String?
+  status      Status    @default(todo)
+  priority    Priority  @default(medium)
+  dueDate     DateTime? @map("due_date")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  org         Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  assignments TaskAssignment[]
+  comments    Comment[]
+
+  // Index justification:
+  // 1. [orgId, status]: Dashboard status metrics and filtered task lists.
+  // 2. [orgId, priority]: Fast filtering by priority within an org.
+  // 3. [projectId, deletedAt]: Fast project task retrieval excluding soft-deleted records.
+  // 4. [dueDate]: Speed up due-date range filtering.
+  @@index([orgId, status])
+  @@index([orgId, priority])
+  @@index([projectId, deletedAt])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+// task_assignments links tasks to assigned users.
+// FK Decisions:
+// - task: CASCADE - deleting a task removes its assignments.
+// - user: CASCADE - deleting a user removes task assignment records.
+model TaskAssignment {
+  id         String   @id @default(uuid()) @db.Uuid
+  taskId     String   @map("task_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Unique constraint ensures a user is assigned to a task at most once.
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+  @@map("task_assignments")
+}
+
+// comments on tasks authored by users.
+// FK Decisions:
+// - task: CASCADE - deleting a task deletes its comments.
+// - author/user: CASCADE - deleting a user removes author records.
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  taskId    String   @map("task_id") @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([authorId])
+  @@map("comments")
+}
+
+// refresh_tokens stores hashed refresh tokens for session revocation & rotation.
+// FK Decision: user: CASCADE - deleting a user revokes all refresh tokens.
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  tokenHash String   @unique @map("token_hash")
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at")
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}

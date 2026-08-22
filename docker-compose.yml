@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: taskflow_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow123
+      POSTGRES_DB: taskflow_db
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - '5434:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U taskflow -d taskflow_db']
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: taskflow_redis
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taskflow_api
+    restart: always
+    command: sh -c "npx prisma db push && node dist/prisma/seed.js && node dist/index.js"
+    ports:
+      - '3000:3000'
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://taskflow:taskflow123@postgres:5432/taskflow_db?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: super-secret-access-token-key-taskflow-2026
+      JWT_REFRESH_SECRET: super-secret-refresh-token-key-taskflow-2026
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taskflow_worker
+    restart: always
+    command: node dist/worker.js
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://taskflow:taskflow123@postgres:5432/taskflow_db?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: super-secret-access-token-key-taskflow-2026
+      JWT_REFRESH_SECRET: super-secret-refresh-token-key-taskflow-2026
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

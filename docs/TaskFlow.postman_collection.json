@@ -1,0 +1,210 @@
+{
+  "info": {
+    "name": "TaskFlow Backend API",
+    "description": "Postman Collection for TaskFlow - Multi-tenant Project Management REST API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@acme.com\",\n  \"password\": \"Password123!\",\n  \"name\": \"Alice Admin\",\n  \"orgName\": \"Acme Corporation\"\n}"
+            },
+            "url": { "raw": "http://localhost:3000/auth/register", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@acme.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "http://localhost:3000/auth/login", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"YOUR_REFRESH_TOKEN_HERE\"\n}"
+            },
+            "url": { "raw": "http://localhost:3000/auth/refresh", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["auth", "refresh"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Web App Redesign\",\n  \"description\": \"Frontend and API overhaul\"\n}"
+            },
+            "url": { "raw": "http://localhost:3000/projects", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["projects"] }
+          }
+        },
+        {
+          "name": "List Projects (Offset)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": { "raw": "http://localhost:3000/projects?page=1&limit=20", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["projects"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }] }
+          }
+        },
+        {
+          "name": "Project Dashboard Status Counts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": { "raw": "http://localhost:3000/projects/{{PROJECT_ID}}/dashboard", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["projects", "{{PROJECT_ID}}", "dashboard"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks & Comments",
+      "item": [
+        {
+          "name": "List Tasks with Filters & FTS",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": { "raw": "http://localhost:3000/tasks?status=in_progress&priority=high&search=JWT", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["tasks"], "query": [{ "key": "status", "value": "in_progress" }, { "key": "priority", "value": "high" }, { "key": "search", "value": "JWT" }] }
+          }
+        },
+        {
+          "name": "Create Task (Nested under Project)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Implement Authentication Check\",\n  \"description\": \"JWT verification with rate limiting\",\n  \"status\": \"todo\",\n  \"priority\": \"high\",\n  \"dueDate\": \"2026-09-01T12:00:00.000Z\"\n}"
+            },
+            "url": { "raw": "http://localhost:3000/projects/{{PROJECT_ID}}/tasks", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["projects", "{{PROJECT_ID}}", "tasks"] }
+          }
+        },
+        {
+          "name": "Get Task by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": { "raw": "http://localhost:3000/tasks/{{TASK_ID}}", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["tasks", "{{TASK_ID}}"] }
+          }
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"priority\": \"urgent\"\n}"
+            },
+            "url": { "raw": "http://localhost:3000/tasks/{{TASK_ID}}", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["tasks", "{{TASK_ID}}"] }
+          }
+        },
+        {
+          "name": "Bulk Update Tasks Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskIds\": [\"{{TASK_ID}}\"],\n  \"status\": \"done\"\n}"
+            },
+            "url": { "raw": "http://localhost:3000/tasks/bulk-status", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["tasks", "bulk-status"] }
+          }
+        },
+        {
+          "name": "Delete Task",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": { "raw": "http://localhost:3000/tasks/{{TASK_ID}}", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["tasks", "{{TASK_ID}}"] }
+          }
+        },
+        {
+          "name": "Assign User & Trigger Email Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{USER_ID}}\"\n}"
+            },
+            "url": { "raw": "http://localhost:3000/tasks/{{TASK_ID}}/assign", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["tasks", "{{TASK_ID}}", "assign"] }
+          }
+        },
+        {
+          "name": "Add Comment to Task",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Please review the JWT refresh token rotation logic.\"\n}"
+            },
+            "url": { "raw": "http://localhost:3000/tasks/{{TASK_ID}}/comments", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["tasks", "{{TASK_ID}}", "comments"] }
+          }
+        },
+        {
+          "name": "List Task Comments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": { "raw": "http://localhost:3000/tasks/{{TASK_ID}}/comments", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["tasks", "{{TASK_ID}}", "comments"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Background Jobs",
+      "item": [
+        {
+          "name": "Get Job Status",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:3000/jobs/{{JOB_ID}}", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["jobs", "{{JOB_ID}}"] }
+          }
+        }
+      ]
+    }
+  ]
+}
