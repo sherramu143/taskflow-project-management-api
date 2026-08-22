@@ -15,7 +15,9 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "node dist/prisma/seed.js",
     "test": "jest --runInBand --detectOpenHandles",
-    "test:coverage": "jest --coverage --runInBand --detectOpenHandles"
+    "test:coverage": "jest --coverage --runInBand --detectOpenHandles",
+    "test:e2e:live": "node test-e2e.js",
+    "test:e2e:local": "node test-e2e.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
