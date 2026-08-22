@@ -68,12 +68,21 @@ TaskFlow is a production-ready, multi-tenant project management backend built wi
    cd taskflow-backend
    ```
 
-2. Start all services (`api`, `worker`, `postgres`, `redis`):
+2. Create `.env` from `.env.example`:
+   ```bash
+   # Linux / macOS:
+   cp .env.example .env
+
+   # Windows (PowerShell / CMD):
+   copy .env.example .env
+   ```
+
+3. Start all services (`api`, `worker`, `postgres`, `redis`):
    ```bash
    docker-compose up --build
    ```
 
-3. Access the services:
+4. Access the services:
    - **REST API**: `http://localhost:3000`
    - **Interactive Swagger UI**: `http://localhost:3000/api-docs`
 
