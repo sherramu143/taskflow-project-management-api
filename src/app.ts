@@ -11,11 +11,24 @@ import { errorHandler } from './middleware/errorHandler';
 
 const app: Application = express();
 
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json());
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+const SWAGGER_CSS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css';
+const SWAGGER_JS_URL = [
+  'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.min.js',
+];
+
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customCssUrl: SWAGGER_CSS_URL,
+    customJs: SWAGGER_JS_URL,
+  })
+);
 app.get('/docs-json', (_req, res) => res.json(swaggerSpec));
 
 app.get('/', (_req, res) => {
