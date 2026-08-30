@@ -4,7 +4,7 @@
   "description": "TaskFlow - Multi-tenant Project Management Backend with Background Worker",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc && tsc prisma/seed.ts --outDir dist/prisma --module commonjs --target es2022 --esModuleInterop --skipLibCheck",
+    "build": "prisma generate && tsc && tsc prisma/seed.ts --outDir dist/prisma --module commonjs --target es2022 --esModuleInterop --skipLibCheck",
     "postinstall": "prisma generate",
     "start": "node dist/index.js",
     "start:worker": "node dist/worker.js",
