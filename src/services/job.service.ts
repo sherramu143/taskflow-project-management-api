@@ -1,9 +1,10 @@
-import { emailQueue } from '../queues/emailQueue';
+import { emailQueue, ensureRedisConnection } from '../queues/emailQueue';
 import { NotFoundError, AppError } from '../utils/errors';
 
 export class JobService {
   static async getJobStatus(jobId: string) {
     try {
+      await ensureRedisConnection();
       const job = await emailQueue.getJob(jobId);
 
       if (!job) {
