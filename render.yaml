@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     autoDeploy: true
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npx prisma db push && npm start
     envVars:
       - key: PORT
@@ -19,6 +19,8 @@ services:
         value: 6379
       - key: REDIS_PASSWORD
         sync: false
+      - key: REDIS_URL
+        sync: false
       - key: JWT_SECRET
         value: super-secret-access-token-key-taskflow-2026
       - key: JWT_REFRESH_SECRET
@@ -28,24 +30,5 @@ services:
       - key: JWT_REFRESH_EXPIRES_IN
         value: 7d
 
-  - type: worker
-    name: taskflow-worker
-    env: node
-    plan: free
-    autoDeploy: true
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:worker
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: DATABASE_URL
-        sync: false
-      - key: REDIS_HOST
-        sync: false
-      - key: REDIS_PORT
-        value: 6379
-      - key: REDIS_PASSWORD
-        sync: false
-      - key: REDIS_URL
-        sync: false
+
 
