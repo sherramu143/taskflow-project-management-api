@@ -74,6 +74,10 @@ export interface TaskAssignmentEmailJobData {
   orgId: string;
 }
 
+export async function sendMockEmail(data: TaskAssignmentEmailJobData): Promise<void> {
+  console.log(`[Email Dispatch] To: ${data.userName} <${data.userEmail}> | Task: "${data.taskTitle}" (ID: ${data.taskId})`);
+}
+
 export async function enqueueTaskAssignmentEmail(data: TaskAssignmentEmailJobData) {
   await ensureRedisConnection();
   // Deduplicate duplicate assignment notifications within a 5-second window

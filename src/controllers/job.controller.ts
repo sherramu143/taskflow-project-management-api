@@ -11,4 +11,15 @@ export class JobController {
       next(error);
     }
   }
+
+  static async processPending(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const limitParam = req.query.limit || req.body?.limit;
+      const limit = limitParam ? parseInt(String(limitParam), 10) : 10;
+      const result = await JobService.processPendingJobs(limit);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

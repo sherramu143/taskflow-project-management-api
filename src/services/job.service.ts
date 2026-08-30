@@ -1,4 +1,4 @@
-import { emailQueue, ensureRedisConnection } from '../queues/emailQueue';
+import { emailQueue, ensureRedisConnection, sendMockEmail } from '../queues/emailQueue';
 import { NotFoundError, AppError } from '../utils/errors';
 
 export class JobService {
@@ -45,6 +45,39 @@ export class JobService {
         `Job service unavailable: ${err.message || 'Unable to connect to Redis background queue'}`,
         500,
         'QUEUE_CONNECTION_ERROR',
+        { originalError: err.message }
+      );
+    }
+  }
+
+  static async processPendingJobs(limit: number = 10) {
+    try {
+      await ensureRedisConnection();
+      const waitingJobs = await emailQueue.getJobs(['waiting', 'delayed'], 0, limit - 1);
+
+      const results = [];
+      for (const job of waitingJobs) {
+        try {
+          await sendMockEmail(job.data);
+          await job.moveToCompleted({ delivered: true, recipient: job.data.userEmail }, '0', false);
+          results.push({ id: job.id, name: job.name, status: 'completed' });
+        } catch (err: any) {
+          await job.moveToFailed(new Error(err.message), '0', false);
+          results.push({ id: job.id, name: job.name, status: 'failed', error: err.message });
+        }
+      }
+
+      return {
+        message: 'Pending jobs processed successfully',
+        processedCount: results.length,
+        jobs: results,
+      };
+    } catch (err: any) {
+      if (err instanceof AppError) throw err;
+      throw new AppError(
+        `Failed to process pending jobs: ${err.message}`,
+        500,
+        'QUEUE_PROCESSING_ERROR',
         { originalError: err.message }
       );
     }
