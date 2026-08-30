@@ -5,6 +5,9 @@ export class JobController {
   static async getStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      if (id === 'process-pending') {
+        return JobController.processPending(req, res, next);
+      }
       const jobStatus = await JobService.getJobStatus(id);
       res.status(200).json(jobStatus);
     } catch (error) {
