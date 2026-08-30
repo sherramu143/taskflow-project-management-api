@@ -41,3 +41,14 @@ process.on('SIGINT', async () => {
   await emailWorker.close();
   process.exit(0);
 });
+
+// Dummy HTTP server to satisfy Render Web Service health checks
+import http from 'http';
+const port = process.env.PORT || 10000;
+http.createServer((_req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Worker is healthy');
+}).listen(port, () => {
+  console.log(`Worker healthcheck listening on port ${port}`);
+});
+
