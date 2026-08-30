@@ -3,6 +3,7 @@ services:
     name: taskflow-api
     env: node
     plan: free
+    autoDeploy: true
     buildCommand: npm install && npm run build
     startCommand: npx prisma db push && npm start
     envVars:
@@ -31,6 +32,7 @@ services:
     name: taskflow-worker
     env: node
     plan: free
+    autoDeploy: true
     buildCommand: npm install && npm run build
     startCommand: npm run start:worker
     envVars:
