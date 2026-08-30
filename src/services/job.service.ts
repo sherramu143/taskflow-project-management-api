@@ -9,16 +9,7 @@ export class JobService {
       throw new NotFoundError(`Job with ID ${jobId} not found`, 'JOB_NOT_FOUND');
     }
 
-    let state = await job.getState();
-
-    // On serverless environments (e.g. Vercel), wait briefly for worker to complete processing
-    if (state === 'waiting' || state === 'active' || state === 'delayed') {
-      for (let i = 0; i < 15; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        state = await job.getState();
-        if (state === 'completed' || state === 'failed') break;
-      }
-    }
+    const state = await job.getState();
 
     // Map BullMQ states to supported statuses: pending, active, completed, failed
     let mappedStatus: 'pending' | 'active' | 'completed' | 'failed' = 'pending';
@@ -32,6 +23,7 @@ export class JobService {
     } else {
       mappedStatus = 'pending';
     }
+
 
 
     return {
