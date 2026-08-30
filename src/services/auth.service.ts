@@ -10,13 +10,22 @@ import { AppError, ConflictError, UnauthorizedError, NotFoundError } from '../ut
 import { Role } from '@prisma/client';
 
 export class AuthService {
-  static async register(data: { email: string; password: string; name: string; orgName?: string }) {
+  static async register(data: { email: string; password: string; name: string; orgName?: string; orgId?: string }) {
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
     });
 
     if (existingUser) {
       throw new ConflictError('User with this email already exists', 'USER_ALREADY_EXISTS');
+    }
+
+    if (data.orgId) {
+      const existingOrg = await prisma.organization.findUnique({
+        where: { id: data.orgId },
+      });
+      if (!existingOrg) {
+        throw new NotFoundError('Target organization not found', 'ORGANIZATION_NOT_FOUND');
+      }
     }
 
     const passwordHash = await hashPassword(data.password);
@@ -32,24 +41,43 @@ export class AuthService {
         },
       });
 
-      const org = await tx.organization.create({
-        data: {
-          name: orgName,
-          slug,
-        },
-      });
+      let targetOrgId: string;
+      let targetOrgName: string;
+      let memberRole: Role;
+
+      if (data.orgId) {
+        const org = await tx.organization.findUnique({
+          where: { id: data.orgId },
+        });
+        if (!org) {
+          throw new NotFoundError('Target organization not found', 'ORGANIZATION_NOT_FOUND');
+        }
+        targetOrgId = org.id;
+        targetOrgName = org.name;
+        memberRole = Role.member;
+      } else {
+        const org = await tx.organization.create({
+          data: {
+            name: orgName,
+            slug,
+          },
+        });
+        targetOrgId = org.id;
+        targetOrgName = org.name;
+        memberRole = Role.org_admin;
+      }
 
       const member = await tx.orgMember.create({
         data: {
-          orgId: org.id,
+          orgId: targetOrgId,
           userId: user.id,
-          role: Role.org_admin,
+          role: memberRole,
         },
       });
 
       const accessToken = generateAccessToken({
         userId: user.id,
-        orgId: org.id,
+        orgId: targetOrgId,
         role: member.role,
       });
 
@@ -69,8 +97,8 @@ export class AuthService {
           name: user.name,
         },
         organization: {
-          id: org.id,
-          name: org.name,
+          id: targetOrgId,
+          name: targetOrgName,
           role: member.role,
         },
         tokens: {

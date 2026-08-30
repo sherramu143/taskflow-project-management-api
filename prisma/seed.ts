@@ -18,9 +18,10 @@ async function main() {
 
   const passwordHash = await bcrypt.hash('Password123!', 12);
 
-  // 1. Create Users
+  // 1. Create Users with Fixed UUIDs
   const userAdminAcme = await prisma.user.create({
     data: {
+      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       email: 'admin@acme.com',
       passwordHash,
       name: 'Alice Admin (Acme)',
@@ -29,6 +30,7 @@ async function main() {
 
   const userMember1Acme = await prisma.user.create({
     data: {
+      id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
       email: 'member1@acme.com',
       passwordHash,
       name: 'Bob Developer (Acme)',
@@ -37,6 +39,7 @@ async function main() {
 
   const userMember2Acme = await prisma.user.create({
     data: {
+      id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
       email: 'member2@acme.com',
       passwordHash,
       name: 'Charlie Designer (Acme)',
@@ -45,6 +48,7 @@ async function main() {
 
   const userAdminStark = await prisma.user.create({
     data: {
+      id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
       email: 'admin@stark.com',
       passwordHash,
       name: 'Tony Stark (Stark Tech)',
@@ -53,6 +57,7 @@ async function main() {
 
   const userMemberStark = await prisma.user.create({
     data: {
+      id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
       email: 'member@stark.com',
       passwordHash,
       name: 'Peter Parker (Stark Tech)',
@@ -61,9 +66,10 @@ async function main() {
 
   console.log('Created 5 Users.');
 
-  // 2. Create Organizations
+  // 2. Create Organizations with Fixed UUIDs
   const orgAcme = await prisma.organization.create({
     data: {
+      id: '11111111-1111-1111-1111-111111111111',
       name: 'Acme Corporation',
       slug: 'acme-corp',
     },
@@ -71,6 +77,7 @@ async function main() {
 
   const orgStark = await prisma.organization.create({
     data: {
+      id: '22222222-2222-2222-2222-222222222222',
       name: 'Stark Tech',
       slug: 'stark-tech',
     },
