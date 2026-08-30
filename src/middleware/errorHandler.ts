@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import { Prisma } from '@prisma/client';
 import { AppError } from '../utils/errors';
 
 export function errorHandler(
@@ -32,10 +33,39 @@ export function errorHandler(
     return;
   }
 
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === 'P2002') {
+      res.status(409).json({
+        error: 'A resource with that unique constraint already exists',
+        code: 'CONFLICT',
+        details: { target: err.meta?.target },
+      });
+      return;
+    }
+    if (err.code === 'P2025') {
+      res.status(404).json({
+        error: 'Requested record not found',
+        code: 'NOT_FOUND',
+        details: { message: err.message },
+      });
+      return;
+    }
+  }
+
+  if (err instanceof Prisma.PrismaClientInitializationError) {
+    res.status(500).json({
+      error: 'Database connection failure. Check DATABASE_URL environment variable.',
+      code: 'DATABASE_CONNECTION_ERROR',
+      details: { message: err.message },
+    });
+    return;
+  }
+
   console.error('Unhandled Server Error:', err);
   res.status(500).json({
-    error: 'Internal server error',
+    error: err.message || 'Internal server error',
     code: 'INTERNAL_SERVER_ERROR',
-    details: process.env.NODE_ENV === 'development' ? { message: err.message } : {},
+    details: { message: err.message || 'An unexpected server error occurred' },
   });
 }
+
