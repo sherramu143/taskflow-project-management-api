@@ -20,12 +20,12 @@ const redisOptions = {
 export const redisConnection = redisUrl
   ? new Redis(redisUrl, redisOptions)
   : new Redis({
-      host,
-      port,
-      password,
-      tls: isLocal ? undefined : {},
-      ...redisOptions,
-    });
+    host,
+    port,
+    password,
+    tls: isLocal ? undefined : {},
+    ...redisOptions,
+  });
 
 export async function ensureRedisConnection() {
   if ((redisConnection.status as string) === 'ready') {
@@ -35,10 +35,10 @@ export async function ensureRedisConnection() {
   if (['wait', 'end', 'close'].includes(redisConnection.status)) {
     try {
       redisConnection.disconnect();
-    } catch (err) {}
+    } catch (err) { }
     try {
       await redisConnection.connect();
-    } catch (err) {}
+    } catch (err) { }
   }
 
   let attempts = 0;
