@@ -5,11 +5,6 @@
       "source": "/(.*)",
       "destination": "/api"
     }
-  ],
-  "crons": [
-    {
-      "path": "/jobs/process-pending",
-      "schedule": "0 * * * *"
-    }
   ]
 }
+
