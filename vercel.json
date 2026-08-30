@@ -9,7 +9,7 @@
   "crons": [
     {
       "path": "/jobs/process-pending",
-      "schedule": "* * * * *"
+      "schedule": "0 * * * *"
     }
   ]
 }
